@@ -25,7 +25,7 @@ func IdentityFromKey(privkey []byte) (config.Identity, error) {
 	}
 	ident.PrivKey = base64.StdEncoding.EncodeToString(skbytes)
 
-	id, err := peer.IDFromPublicKey(sk.GetPublic())
+	id, err := peer.InlineIDFromPublicKey(sk.GetPublic())
 	if err != nil {
 		return ident, err
 	}

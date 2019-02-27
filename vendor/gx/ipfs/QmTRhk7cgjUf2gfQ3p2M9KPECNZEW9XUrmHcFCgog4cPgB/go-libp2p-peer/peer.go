@@ -178,7 +178,7 @@ func IDFromPublicKey(pk ic.PubKey) (ID, error) {
 
 // IDFromPrivateKey returns the Peer ID corresponding to sk
 func IDFromPrivateKey(sk ic.PrivKey) (ID, error) {
-	return IDFromPublicKey(sk.GetPublic())
+	return InlineIDFromPublicKey(sk.GetPublic())
 }
 
 // IDSlice for sorting peers
