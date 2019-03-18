@@ -612,6 +612,7 @@ func (i *BlockBookClient) Broadcast(tx []byte) (string, error) {
 	txHex := hex.EncodeToString(tx)
 	resp, err := i.RequestFunc("sendtx/"+txHex, http.MethodGet, nil, nil)
 	if err != nil {
+		fmt.Println("Failed request is sendtx/"+txHex)
 		return "", fmt.Errorf("error broadcasting tx: %s", err)
 	}
 	defer resp.Body.Close()
