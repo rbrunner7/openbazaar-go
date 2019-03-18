@@ -207,7 +207,7 @@ func (i *BlockBookClient) doRequest(endpoint, method string, body []byte, query 
 
 	resp, err := i.HTTPClient.Do(req)
 	if err != nil {
-		return nil, err
+		return resp, err
 	}
 	// Try again if for some reason it returned a bad request
 	if resp.StatusCode == http.StatusBadRequest {
@@ -215,11 +215,11 @@ func (i *BlockBookClient) doRequest(endpoint, method string, body []byte, query 
 		req.Body = ioutil.NopCloser(bytes.NewReader(body))
 		resp, err = i.HTTPClient.Do(req)
 		if err != nil {
-			return nil, err
+			return resp, err
 		}
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("status not ok: %s", resp.Status)
+		return resp, fmt.Errorf("status not ok: %s", resp.Status)
 	}
 	return resp, nil
 }
