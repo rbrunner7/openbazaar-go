@@ -223,6 +223,7 @@ func (ws *WalletService) processIncomingBlock(block model.Block) {
 							continue
 						}
 					}
+					return
 				}
 				// Rebroadcast unconfirmed transactions
 				_, err = ws.client.Broadcast(tx.Bytes)
