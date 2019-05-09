@@ -11,12 +11,13 @@ import (
 	"github.com/OpenBazaar/multiwallet/client/insight"
 	"github.com/OpenBazaar/multiwallet/config"
 	"github.com/OpenBazaar/multiwallet/litecoin"
+	"github.com/OpenBazaar/multiwallet/monero"
 	"github.com/OpenBazaar/multiwallet/service"
 	"github.com/OpenBazaar/multiwallet/zcash"
-	"github.com/OpenBazaar/wallet-interface"
+	wallet "github.com/OpenBazaar/wallet-interface"
 	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/op/go-logging"
-	"github.com/tyler-smith/go-bip39"
+	logging "github.com/op/go-logging"
+	bip39 "github.com/tyler-smith/go-bip39"
 )
 
 var log = logging.MustGetLogger("multiwallet")
@@ -89,12 +90,18 @@ func NewMultiWallet(cfg *config.Config) (MultiWallet, error) {
 			} else {
 				multiwallet[wallet.TestnetLitecoin] = w
 			}
-			//case wallet.Ethereum:
-			//w, err = eth.NewEthereumWallet(coin, cfg.Mnemonic, cfg.Proxy)
-			//if err != nil {
-			//return nil, err
-			//}
-			//multiwallet[coin.CoinType] = w
+		//case wallet.Ethereum:
+		//w, err = eth.NewEthereumWallet(coin, cfg.Mnemonic, cfg.Proxy)
+		//if err != nil {
+		//return nil, err
+		//}
+		//multiwallet[coin.CoinType] = w
+		case wallet.Monero:
+			w, err = monero.NewMoneroWallet(coin, cfg.Params, cfg.Proxy, cfg.Logger)
+			if err != nil {
+				return nil, err
+			}
+			multiwallet[wallet.Monero] = w
 		}
 	}
 	return multiwallet, nil

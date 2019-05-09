@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/OpenBazaar/multiwallet/monero"
+
 	eth "github.com/OpenBazaar/go-ethwallet/wallet"
 	"github.com/OpenBazaar/multiwallet"
 	"github.com/OpenBazaar/multiwallet/bitcoin"
@@ -22,10 +24,10 @@ import (
 	"github.com/OpenBazaar/openbazaar-go/repo/db"
 	"github.com/OpenBazaar/openbazaar-go/schema"
 	"github.com/OpenBazaar/spvwallet"
-	"github.com/OpenBazaar/wallet-interface"
+	wallet "github.com/OpenBazaar/wallet-interface"
 	"github.com/btcsuite/btcd/chaincfg"
 	bchspv "github.com/cpacia/BitcoinCash-Wallet"
-	"github.com/op/go-logging"
+	logging "github.com/op/go-logging"
 	"golang.org/x/net/proxy"
 )
 
@@ -90,6 +92,9 @@ func NewMultiWallet(cfg *WalletConfig) (multiwallet.MultiWallet, error) {
 		enableAPIWallet[wallet.Litecoin] = cfg.ConfigFile.LTC
 	}
 	enableAPIWallet[wallet.Ethereum] = nil
+	if cfg.ConfigFile.XMR != nil && cfg.ConfigFile.XMR.Type == "API" {
+		enableAPIWallet[wallet.Monero] = cfg.ConfigFile.XMR
+	}
 
 	var newMultiwallet = make(multiwallet.MultiWallet)
 	for coin, coinConfig := range enableAPIWallet {
@@ -170,6 +175,17 @@ func createAPIWallet(coin wallet.CoinType, coinConfigOverrides *schema.CoinConfi
 	case wallet.Ethereum:
 		actualCoin = wallet.Ethereum
 		w, err := eth.NewEthereumWallet(*coinConfig, cfg.Mnemonic, cfg.Proxy)
+		if err != nil {
+			return InvalidCoinType, nil, err
+		}
+		return actualCoin, w, nil
+	case wallet.Monero:
+		if testnet {
+			actualCoin = wallet.TestnetMonero
+		} else {
+			actualCoin = wallet.Monero
+		}
+		w, err := monero.NewMoneroWallet(*coinConfig, cfg.Params, cfg.Proxy, cfg.Logger)
 		if err != nil {
 			return InvalidCoinType, nil, err
 		}
@@ -338,6 +354,8 @@ func prepareAPICoinConfig(coin wallet.CoinType, override *schema.CoinConfig, wal
 	case wallet.Ethereum:
 		defaultConfig = defaultConfigSet.ETH
 		defaultCoinOptions = schema.EthereumDefaultOptions()
+	case wallet.Monero:
+		defaultConfig = defaultConfigSet.XMR
 	}
 
 	if testnet {
