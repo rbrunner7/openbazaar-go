@@ -290,8 +290,9 @@ const (
 type KeyPurpose int
 
 const (
-	EXTERNAL KeyPurpose = 0
-	INTERNAL            = 1
+	EXTERNAL       KeyPurpose = 0
+	INTERNAL                  = 1
+	DIRECT_PAYMENT            = 2 // @@@ Little hack to query Monero address for offline direct payment
 )
 
 // This callback is passed to any registered transaction listeners when a transaction is detected

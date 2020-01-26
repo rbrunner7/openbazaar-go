@@ -8,7 +8,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/OpenBazaar/multiwallet/monero"
 	"github.com/OpenBazaar/openbazaar-go/ipfs"
+	"github.com/OpenBazaar/wallet-interface"
 	"github.com/golang/protobuf/ptypes/timestamp"
 
 	crypto "gx/ipfs/QmTW4SdgBWq9GjsBsHeUx8WuGxzhgzAf88UMH2w62PC8yK/go-libp2p-crypto"
@@ -24,7 +26,8 @@ import (
 	"github.com/OpenBazaar/jsonpb"
 	"github.com/OpenBazaar/openbazaar-go/pb"
 	"github.com/OpenBazaar/openbazaar-go/repo"
-	"github.com/OpenBazaar/wallet-interface"
+	wi "github.com/OpenBazaar/wallet-interface"
+	btc "github.com/btcsuite/btcutil"
 	hd "github.com/btcsuite/btcutil/hdkeychain"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
@@ -333,30 +336,36 @@ func processOfflineDirectOrder(n *OpenBazaarNode, wal wallet.Wallet, contract *p
 	}
 	payment.Method = pb.Order_Payment_DIRECT
 
-	/* Generate a payment address using the first child key derived from the buyer's
-	   and vendors's masterPubKeys and a random chaincode. */
-	chaincode := make([]byte, 32)
-	_, err := rand.Read(chaincode)
-	if err != nil {
-		return "", "", 0, false, err
+	var address btc.Address
+	if (wal.CurrencyCode() == "XMR") || (wal.CurrencyCode() == "TXMR") {
+		address = monero.NewMoneroAddress(contract.BuyerOrder.BuyerID.Pubkeys.Monero)
+	} else {
+		/* Generate a payment address using the first child key derived from the buyer's
+		   and vendors's masterPubKeys and a random chaincode. */
+		chaincode := make([]byte, 32)
+		_, err := rand.Read(chaincode)
+		if err != nil {
+			return "", "", 0, false, err
+		}
+		vendorKey, err := wal.ChildKey(contract.VendorListings[0].VendorID.Pubkeys.Bitcoin, chaincode, false)
+		if err != nil {
+			return "", "", 0, false, err
+		}
+		buyerKey, err := wal.ChildKey(contract.BuyerOrder.BuyerID.Pubkeys.Bitcoin, chaincode, false)
+		if err != nil {
+			return "", "", 0, false, err
+		}
+		addr, redeemScript, err := wal.GenerateMultisigScript([]hd.ExtendedKey{*buyerKey, *vendorKey}, 1, time.Duration(0), nil)
+		if err != nil {
+			return "", "", 0, false, err
+		}
+		payment.Address = addr.EncodeAddress()
+		payment.RedeemScript = hex.EncodeToString(redeemScript)
+		payment.Chaincode = hex.EncodeToString(chaincode)
+		address = addr
 	}
-	vendorKey, err := wal.ChildKey(contract.VendorListings[0].VendorID.Pubkeys.Bitcoin, chaincode, false)
-	if err != nil {
-		return "", "", 0, false, err
-	}
-	buyerKey, err := wal.ChildKey(contract.BuyerOrder.BuyerID.Pubkeys.Bitcoin, chaincode, false)
-	if err != nil {
-		return "", "", 0, false, err
-	}
-	addr, redeemScript, err := wal.GenerateMultisigScript([]hd.ExtendedKey{*buyerKey, *vendorKey}, 1, time.Duration(0), nil)
-	if err != nil {
-		return "", "", 0, false, err
-	}
-	payment.Address = addr.EncodeAddress()
-	payment.RedeemScript = hex.EncodeToString(redeemScript)
-	payment.Chaincode = hex.EncodeToString(chaincode)
 
-	err = wal.AddWatchedAddresses(addr)
+	err := wal.AddWatchedAddresses(address)
 	if err != nil {
 		return "", "", 0, false, err
 	}
@@ -734,6 +743,11 @@ func getContractIdentity(n *OpenBazaarNode) (*pb.ID, error) {
 		return nil, err
 	}
 	keys.Bitcoin = ecPubKey.SerializeCompressed()
+	moneroWallet, err := n.Multiwallet.WalletForCurrencyCode("XMR")
+	if err == nil {
+		moneroKey := moneroWallet.CurrentAddress(wi.DIRECT_PAYMENT)
+		keys.Monero = moneroKey.EncodeAddress()
+	}
 	id.Pubkeys = keys
 	// Sign the PeerID with the Bitcoin key
 	ecPrivKey, err := n.MasterPrivateKey.ECPrivKey()

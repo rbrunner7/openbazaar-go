@@ -66,3 +66,5 @@ require (
 	github.com/whyrusleeping/multiaddr-filter v0.0.0-20160516205228-e903e4adabd7 // indirect
 	github.com/whyrusleeping/yamux v1.1.5 // indirect
 )
+
+go 1.13

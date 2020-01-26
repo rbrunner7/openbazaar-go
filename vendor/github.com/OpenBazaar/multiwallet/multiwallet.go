@@ -10,6 +10,7 @@ import (
 	"github.com/OpenBazaar/multiwallet/client/blockbook"
 	"github.com/OpenBazaar/multiwallet/config"
 	"github.com/OpenBazaar/multiwallet/litecoin"
+	"github.com/OpenBazaar/multiwallet/monero"
 	"github.com/OpenBazaar/multiwallet/service"
 	"github.com/OpenBazaar/multiwallet/zcash"
 	"github.com/OpenBazaar/wallet-interface"
@@ -93,6 +94,12 @@ func NewMultiWallet(cfg *config.Config) (MultiWallet, error) {
 			//return nil, err
 			//}
 			//multiwallet[coin.CoinType] = w
+		case wallet.Monero:
+			w, err = monero.NewMoneroWallet(coin, cfg.Params, cfg.Proxy, cfg.Logger)
+			if err != nil {
+				return nil, err
+			}
+			multiwallet[wallet.Monero] = w
 		}
 	}
 	return multiwallet, nil

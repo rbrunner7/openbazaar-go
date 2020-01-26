@@ -13,3 +13,5 @@ require (
 	github.com/whyrusleeping/go-logging v0.0.0-20170515211332-0457bb6b88fc // indirect
 	golang.org/x/net v0.0.0-20181220203305-927f97764cc3 // indirect
 )
+
+go 1.13

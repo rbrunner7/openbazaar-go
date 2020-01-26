@@ -71,3 +71,5 @@ require (
 	github.com/whyrusleeping/yamux v1.1.5 // indirect
 	golang.org/x/net v0.0.0-20190225153610-fe579d43d832 // indirect
 )
+
+go 1.13

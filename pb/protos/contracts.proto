@@ -395,6 +395,7 @@ message ID {
     message Pubkeys {
         bytes identity = 1; // IPFS public key
         bytes bitcoin  = 2; // Bitcoin public key
+        string monero  = 3; // Monero offline payment address
     }
 }
 
